@@ -4,7 +4,7 @@ const {
     logBackendError,
 } = require("./backend.functions");
 
-const mongoURI = `mongodb+srv://${mongoConfig.MONGO_USER_NAME}:${mongoConfig.MONGO_PASSWORD}@gads-revenue.fbtqrak.mongodb.net/dev`;
+const mongoURI = `mongodb://${mongoConfig.MONGO_USER_NAME}:${mongoConfig.MONGO_PASSWORD}@${mongoConfig.MONGO_HOST}:${mongoConfig.MONGO_PORT}/${mongoConfig.MONGO_DB_NAME}`;
 
 const connectToMongoDB = () => {
     mongoose
@@ -16,7 +16,7 @@ const connectToMongoDB = () => {
             console.error('Error connecting to MongoDB', err);
             logBackendError(
                 __filename,
-                error?.message,
+                err?.message,
                 null,
                 null,
                 "Unable to start MongoDB."

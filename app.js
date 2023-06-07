@@ -116,7 +116,7 @@ connectToMongoDB();
     console.error(`Unable to start Express Server. Error : ${error}`);
     process.exit(0);
   }
-})(process.env.APP_PORT || 3500);
+})(process.env.APP_PORT || 3600);
 
 process.on("SIGINT", () => {
   setTimeout(() => {
