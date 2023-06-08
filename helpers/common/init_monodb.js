@@ -2,8 +2,6 @@ const mongoose = require("mongoose");
 const { mongoConfig } = require("./environment");
 const { logBackendError } = require("./backend.functions");
 
-// const mongoURI = `mongodb://${mongoConfig.MONGO_USER_NAME}:${mongoConfig.MONGO_PASSWORD}@${mongoConfig.MONGO_HOST}:${mongoConfig.MONGO_PORT}/${mongoConfig.MONGO_DB_NAME}`;
-
 let mongodbURI =
   `mongodb${process.env.NODE_ENV === "production" ? "+srv://" : "://"}` +
   process.env.MONGODB_DB_HOST;

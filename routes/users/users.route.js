@@ -5,6 +5,8 @@ const userController = require("../../controllers/user.controller");
 
 // Define Routes
 userRoute.post("/markAttendence", userController.attendenceMarker);
+userRoute.post("/getUserActivity", userController.getUserActivity);
+
 
 
 // Export routes
