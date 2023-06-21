@@ -140,15 +140,31 @@ const attendenceMarker = function (req, res) {
 
 const getUserActivity = function (req, res) {
   const currentDate = moment().format('DD-MM-YYYY');
+  var userData=[]
   let promise = new Promise((resolve, reject) => {
     activity.findOne({ email: req.body.email, date: currentDate })
       .then(async (findUser) => {
         if (findUser) {
-          let userActivity = await activity.findOne({
-            date: currentDate,
-            email: findUser.email
-          })
-          resolve(userActivity.activities)
+          let userActivity = await activity.find({
+            date: currentDate})
+
+             for (const iterator of userActivity) {
+              const timeSummary = calculateTimeSummary(iterator);
+              userData.push({
+                "email":iterator.email ,
+                "fullname":iterator.fullname ,
+                "activities":iterator.activities,
+                "date":iterator.date,
+                totalLoggedinTime:moment.duration(timeSummary.totalLoggedInTime).humanize(),
+                totalBreakTime:moment.duration(timeSummary.totalBreakTime).humanize(),
+                totalLoginTimeWithoutBreak:moment.duration(timeSummary.totalLoggedInTimeWithoutBreaks).humanize()
+              })
+              console.log('Total Logged-in Time:', moment.duration(timeSummary.totalLoggedInTime).humanize());
+              console.log('Total Break Time:', moment.duration(timeSummary.totalBreakTime).humanize());
+              console.log('Total Logged-in Time without Breaks:', moment.duration(timeSummary.totalLoggedInTimeWithoutBreaks).humanize());
+              
+            }
+       resolve(userData)
         } else {
           resolve(false);
         }
@@ -165,6 +181,64 @@ const getUserActivity = function (req, res) {
       res.status(400).send({ code: 500, message: e.message });
     });
 };
+
+function calculateTimeSummary(record) {
+  let totalLoggedInTime = 0;
+  let totalBreakTime = 0;
+  let totalLoggedInTimeWithoutBreaks = 0;
+  let checkInTime = null;
+  let isInBreak = false;
+  let breakStartTime = null;
+
+  // Iterate through the activities
+  for (let i = 0; i < record.activities.length; i++) {
+    const activity = record.activities[i];
+
+    if (activity.activity === 'checkin') {
+      // Set the check-in time
+      checkInTime = moment(activity.time, 'HH:mm:ss');
+    } else if (activity.activity === 'breakin') {
+      // Set the break start time
+      isInBreak = true;
+      breakStartTime = moment(activity.time, 'HH:mm:ss');
+    } else if (activity.activity === 'breakout') {
+      if (isInBreak && checkInTime) {
+        // Calculate the break duration and add it to the total break time
+        const breakEndTime = moment(activity.time, 'HH:mm:ss');
+        const breakDuration = moment.duration(breakEndTime.diff(breakStartTime)).asMilliseconds();
+        totalBreakTime += breakDuration;
+
+        // Reset the break start time and break status
+        breakStartTime = null;
+        isInBreak = false;
+      }
+    } else if (activity.activity === 'checkout') {
+      if (checkInTime) {
+        // Calculate the duration between check-in and check-out
+        const checkOutTime = moment(activity.time, 'HH:mm:ss');
+        const duration = moment.duration(checkOutTime.diff(checkInTime)).asMilliseconds();
+        totalLoggedInTime += duration;
+
+        // Calculate the duration between check-in and check-out excluding breaks
+        const durationWithoutBreaks = duration - totalBreakTime;
+        totalLoggedInTimeWithoutBreaks += durationWithoutBreaks;
+
+        // Reset the check-in time for the next pair of activities
+        checkInTime = null;
+      }
+    }
+  }
+
+  return {
+    totalLoggedInTime,
+    totalBreakTime,
+    totalLoggedInTimeWithoutBreaks,
+  };
+}
+
+
+
+
 
 module.exports = {
   attendenceMarker,
